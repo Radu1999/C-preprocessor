@@ -25,7 +25,7 @@ void init_ht(HashTable *ht, int hmax, unsigned int (*hash_function)(void *), int
     ht->size = 0;
 }
 
-void put(HashTable *ht, void *key, size_t key_size_bytes, void *value)
+void put(HashTable *ht, void *key, size_t key_size_bytes, void *value, size_t value_size_bytes)
 {
     int index = ht->hash_function(key) % ht->hmax;
     for (struct Node *it = ht->buckets[index].head; it != NULL; it = it->next)
@@ -39,7 +39,8 @@ void put(HashTable *ht, void *key, size_t key_size_bytes, void *value)
     struct info *new_entry = malloc(sizeof(struct info));
     new_entry->key = malloc(key_size_bytes);
     memcpy(new_entry->key, key, key_size_bytes);
-    new_entry->value = value;
+    new_entry->value = malloc(value_size_bytes);
+    memcpy(new_entry->value, value, value_size_bytes);
     add_nth_node(&ht->buckets[index], ht->buckets[index].size, new_entry);
     ht->size++;
 }

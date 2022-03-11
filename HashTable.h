@@ -15,7 +15,7 @@ typedef struct
 
 void init_ht(HashTable *ht, int hmax, unsigned int (*hash_function)(void *), int (*compare_function)(void *, void *));
 
-void put(HashTable *ht, void *key, size_t key_size_bytes, void *value);
+void put(HashTable *ht, void *key, size_t key_size_bytes, void *value, size_t value_size_bytes);
 
 void *get(HashTable *ht, void *key);
 
