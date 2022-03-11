@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stddef.h>
 
 #include "HashTable.h"
 #define LINE_SIZE 300
@@ -22,17 +23,24 @@ int compare_function_strings(void *a, void *b)
     return strcmp((char *)a, (char *)b);
 }
 
-void solve_defines(FILE *in, HashTable *ht, char *line)
+char *solve_defines(FILE *in, HashTable *ht, char *line)
 {
-    char delim[] = "\t \n[]{}<>=+-*/%!&|^.,:;()\\";
+    char delim[26] = "\t \n[]{}<>=+-*/%!&|^.,:;()\\";
     int completed = 0;
     char key[100];
     char value[100];
 
+    int offset;
     while (fgets(line, LINE_SIZE, in))
     {
-        for (char *token = strtok(line, delim); token != NULL; token = strtok(NULL, delim))
+        offset = 0;
+        char *ptr = strdup(line);
+        char *prev = ptr;
+        int len = strlen(line);
+        char *token;
+        while ((token = strsep(&ptr, delim)) != NULL)
         {
+
             if (!strcmp(token, "#define"))
             {
                 completed = 1;
@@ -44,11 +52,25 @@ void solve_defines(FILE *in, HashTable *ht, char *line)
             }
             else if (completed == 2)
             {
+                //[TO DO] I can also have an expression
                 memcpy(value, token, strlen(token) + 1);
                 put(ht, key, strlen(key), value, strlen(value));
                 completed = 0;
             }
+            else
+            {
+                int initial_len = strlen(token);
+                while (has_key(ht, token))
+                {
+                    token = get(ht, token);
+                }
+                printf("%s", token);
+                printf("%.*s", (int)(ptr - prev - initial_len), line + offset + initial_len);
+                offset += (int)(ptr - prev);
+            }
+            prev = ptr;
         }
+        printf("\n");
     }
 }
 
