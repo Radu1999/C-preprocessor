@@ -71,7 +71,7 @@ int has_key(HashTable *ht, void *key)
     return 0;
 }
 
-void remove_ht(HashTable *ht, void *key)
+void remove_ht_entry(HashTable *ht, void *key)
 {
     int index = ht->hash_function(key) % ht->hmax;
     struct Node *rm;
