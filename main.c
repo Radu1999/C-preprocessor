@@ -53,9 +53,10 @@ char *solve_defines(FILE *in, HashTable *ht, char *line)
             else if (completed == 2)
             {
                 //[TO DO] I can also have an expression
-                memcpy(value, token, strlen(token) + 1);
-                put(ht, key, strlen(key), value, strlen(value));
+                memcpy(value, line + offset, strlen(line) - offset - 1);
+                put(ht, key, strlen(key), value, strlen(line) - offset - 1);
                 completed = 0;
+                break;
             }
             else
             {
@@ -66,11 +67,10 @@ char *solve_defines(FILE *in, HashTable *ht, char *line)
                 }
                 printf("%s", token);
                 printf("%.*s", (int)(ptr - prev - initial_len), line + offset + initial_len);
-                offset += (int)(ptr - prev);
             }
+            offset += (int)(ptr - prev);
             prev = ptr;
         }
-        printf("\n");
     }
 }
 
