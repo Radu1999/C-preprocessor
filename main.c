@@ -26,7 +26,8 @@ int compare_function_strings(void *a, void *b)
 char *solve_defines(FILE *in, HashTable *ht, char *line)
 {
     char delim[26] = "\t \n[]{}<>=+-*/%!&|^.,:;()\\";
-    int completed = 0;
+    int completed_def = 0;
+    int completed_udef = 0;
     char key[100];
     char value[100];
 
@@ -43,19 +44,29 @@ char *solve_defines(FILE *in, HashTable *ht, char *line)
 
             if (!strcmp(token, "#define"))
             {
-                completed = 1;
+                completed_def = 1;
             }
-            else if (completed == 1)
+            else if (completed_def == 1)
             {
                 memcpy(key, token, strlen(token) + 1);
-                completed = 2;
+                completed_def = 2;
             }
-            else if (completed == 2)
+            else if (completed_def == 2)
             {
                 //[TO DO] I can also have an expression
                 memcpy(value, line + offset, strlen(line) - offset - 1);
                 put(ht, key, strlen(key), value, strlen(line) - offset - 1);
-                completed = 0;
+                completed_def = 0;
+                break;
+            }
+            else if (!strcmp("#undef", token))
+            {
+                completed_udef = 1;
+            }
+            else if (completed_udef == 1)
+            {
+                remove_ht_entry(ht, token);
+                completed_udef = 0;
                 break;
             }
             else
