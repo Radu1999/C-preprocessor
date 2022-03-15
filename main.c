@@ -63,8 +63,9 @@ char *solve_defines(FILE *in, HashTable *ht, char *line)
             {
                 is_true = !is_true;
             }
-            else if (!strcmp(token, "#if"))
+            else if (!strcmp(token, "#if") || (!strcmp(token, "#elif") && !is_true))
             {
+                is_true = 0;
                 in_if = 1;
             }
             else if (in_if == 1)
