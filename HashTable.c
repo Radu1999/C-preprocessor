@@ -32,15 +32,18 @@ void put(HashTable *ht, void *key, size_t key_size_bytes, void *value, size_t va
     {
         if (!ht->compare_function(((struct info *)it->data)->key, key))
         {
-            ((struct info *)it->data)->value = value;
+            free(((struct info *)it->data)->value);
+            ((struct info *)it->data)->value = malloc(value_size_bytes);
+            memcpy(((struct info *)it->data)->value, value, value_size_bytes);
+
             return;
         }
     }
     struct info *new_entry = malloc(sizeof(struct info));
-    new_entry->key = malloc(key_size_bytes);
-    memcpy(new_entry->key, key, key_size_bytes);
-    new_entry->value = malloc(value_size_bytes);
-    memcpy(new_entry->value, value, value_size_bytes);
+    new_entry->key = malloc(key_size_bytes + 1);
+    memcpy(new_entry->key, key, key_size_bytes + 1);
+    new_entry->value = malloc(value_size_bytes + 1);
+    memcpy(new_entry->value, value, value_size_bytes + 1);
     add_nth_node(&ht->buckets[index], ht->buckets[index].size, new_entry);
     ht->size++;
 }
@@ -82,6 +85,7 @@ void remove_ht_entry(HashTable *ht, void *key)
         {
             rm = remove_nth_node(&ht->buckets[index], position);
             free(((struct info *)rm->data)->key);
+            free(((struct info *)it->data)->value);
             free(rm->data);
             free(rm);
             ht->size--;
@@ -99,6 +103,7 @@ void free_ht(HashTable *ht)
         {
             it = remove_nth_node(&ht->buckets[i], 0);
             free(((struct info *)it->data)->key);
+            free(((struct info *)it->data)->value);
             free(it->data);
             free(it);
         }

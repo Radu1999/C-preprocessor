@@ -33,9 +33,9 @@ int if_ended_or_switched(char *word)
     return !strcmp(word, "#elif") || !strcmp(word, "#else") || !strcmp(word, "#endif");
 }
 
-char *solve_defines(FILE *in, HashTable *ht, char *line)
+int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
 {
-    char delim[26] = "\t \n[]{}<>=+-*/%!&|^.,:;()\\";
+    char delim[27] = "\t \n[]{}<>=+-*/%!&|^.,:;()\\";
     int completed_def = 0;
     int completed_udef = 0;
     char key[100];
@@ -50,9 +50,11 @@ char *solve_defines(FILE *in, HashTable *ht, char *line)
     {
         offset = 0;
         char *ptr = strdup(line);
+        char *start_ptr = ptr;
         char *prev = ptr;
         int len = strlen(line);
         char *token;
+
         while ((token = strsep(&ptr, delim)) != NULL)
         {
             if (in_if == 2 && !is_true && !if_ended_or_switched(token))
@@ -97,15 +99,14 @@ char *solve_defines(FILE *in, HashTable *ht, char *line)
                 else if (completed_def == 1)
                 {
                     memcpy(key, token, strlen(token) + 1);
-                    key[strlen(token) + 1] = '\0';
+                    key[strlen(token)] = '\0';
                     completed_def = 2;
                 }
                 else if (completed_def == 2)
                 {
                     memcpy(value, line + offset, strlen(line) - offset - 1);
                     value[strlen(line) - offset - 1] = '\0';
-
-                    put(ht, key, strlen(key), value, strlen(line) - offset - 1);
+                    put(ht, key, strlen(key), value, strlen(value));
                     completed_def = 0;
                     break;
                 }
@@ -126,29 +127,107 @@ char *solve_defines(FILE *in, HashTable *ht, char *line)
                     {
                         token = get(ht, token);
                     }
-                    printf("%s", token);
-                    printf("%.*s", (int)(ptr - prev - initial_len), line + offset + initial_len);
+                    fprintf(out, "%s", token);
+                    fprintf(out, "%.*s", (int)(ptr - prev - initial_len), line + offset + initial_len);
                 }
             }
 
             offset += (int)(ptr - prev);
             prev = ptr;
         }
+        free(start_ptr);
     }
+    return 0;
 }
 
 int main(int argc, char **argv)
 {
-    char *infile = argv[1];
-    char *outfile = "so-cpp.s";
+    char *infile = NULL;
+    char *outfile = NULL;
     const int ht_size = 10000;
     char line[LINE_SIZE];
 
     HashTable *ht = malloc(sizeof(HashTable));
     init_ht(ht, ht_size, hash, compare_function_strings);
 
-    FILE *in = fopen(infile, "r");
-    FILE *out = fopen(outfile, "w");
+    int symbol = 0;
+    int out_file = 0;
+    char *token;
 
-    solve_defines(in, ht, line);
+    for (int i = 1; i < argc; i++)
+    {
+        if (strlen(argv[i]) == 2 && !strncmp(argv[i], "-D", 2))
+        {
+            symbol = 1;
+        }
+        else if (symbol == 1)
+        {
+            token = strtok(argv[i], "=");
+            char *key = strdup(token);
+            token = strtok(NULL, "=");
+            put(ht, key, strlen(key), token, strlen(token));
+            free(key);
+            symbol = 0;
+        }
+        else if (strlen(argv[i]) == 2 && !strncmp(argv[i], "-o", 2))
+        {
+            out_file = 1;
+        }
+        else if (out_file == 1)
+        {
+            outfile = argv[i];
+            out_file = 0;
+        }
+        else if (infile == NULL)
+        {
+            infile = argv[i];
+        }
+        else
+        {
+            outfile = argv[i];
+        }
+    }
+    FILE *in;
+    if (infile == NULL)
+    {
+        in = stdin;
+    }
+    else
+    {
+        in = fopen(infile, "r");
+        if (in == NULL)
+        {
+            free_ht(ht);
+            return 1;
+        }
+    }
+
+    FILE *out;
+    if (outfile == NULL)
+    {
+        out = stdout;
+    }
+    else
+    {
+        out = fopen(outfile, "w");
+        if (out == NULL)
+        {
+            fclose(in);
+            free_ht(ht);
+            return 1;
+        }
+    }
+
+    if (solve_defines(in, out, ht, line) == 1)
+    {
+        fclose(in);
+        fclose(out);
+        free_ht(ht);
+        return 1;
+    }
+
+    fclose(in);
+    fclose(out);
+    free_ht(ht);
+    return 0;
 }
