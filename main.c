@@ -70,12 +70,32 @@ int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
                 is_true = 0;
                 in_if = 1;
             }
-            else if (in_if == 1)
+            else if (!strcmp(token, "#ifdef"))
+            {
+                is_true = 0;
+                in_if = 3;
+            }
+            else if (!strcmp(token, "#ifndef"))
+            {
+                is_true = 1;
+                in_if = 3;
+            }
+            else if (in_if == 1 || in_if == 3)
             {
                 memcpy(condition, line + offset, strlen(line) - offset - 1);
                 condition[strlen(line) - offset - 1] = '\0';
 
                 char *value = condition;
+                if (in_if == 3)
+                {
+                    if (has_key(ht, value))
+                    {
+                        is_true = !is_true;
+                    }
+                    in_if = 2;
+                    break;
+                }
+
                 while (has_key(ht, value))
                 {
                     value = get(ht, value);
@@ -165,9 +185,31 @@ int main(int argc, char **argv)
             token = strtok(argv[i], "=");
             char *key = strdup(token);
             token = strtok(NULL, "=");
-            put(ht, key, strlen(key), token, strlen(token));
+            if (token == NULL)
+            {
+                put(ht, key, strlen(key), "", 0);
+            }
+            else
+            {
+                put(ht, key, strlen(key), token, strlen(token));
+            }
             free(key);
             symbol = 0;
+        }
+        else if (!strncmp(argv[i], "-D", 2))
+        {
+            token = strtok(argv[i], "=");
+            char *key = strdup(token + 2);
+            token = strtok(NULL, "=");
+            if (token == NULL)
+            {
+                put(ht, key, strlen(key), "", 0);
+            }
+            else
+            {
+                put(ht, key, strlen(key), token, strlen(token));
+            }
+            free(key);
         }
         else if (strlen(argv[i]) == 2 && !strncmp(argv[i], "-o", 2))
         {
@@ -177,6 +219,10 @@ int main(int argc, char **argv)
         {
             outfile = argv[i];
             out_file = 0;
+        }
+        else if (!strncmp(argv[i], "-o", 2))
+        {
+            outfile = argv[i] + 2;
         }
         else if (infile == NULL)
         {
