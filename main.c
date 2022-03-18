@@ -88,7 +88,7 @@ int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
     int offset;
     int is_true = 0;
     int is_comm = 0;
-
+    int is_multi = 0;
     while (fgets(line, LINE_SIZE, in))
     {
         offset = 0;
@@ -97,6 +97,10 @@ int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
         int len = strlen(line);
         char *token = NULL;
         char *prev_token = token;
+        if (!is_multi)
+        {
+            value[0] = '\0';
+        }
         while ((token = strsep(&ptr, delim)) != NULL)
         {
             char *initial_token = token;
@@ -190,8 +194,17 @@ int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
                 }
                 else if (completed_def == 2)
                 {
-                    memcpy(value, line + offset, strlen(line) - offset - 1);
-                    value[strlen(line) - offset - 1] = '\0';
+                    int spaces = strspn(line + offset, " ");
+                    int value_size = strlen(value);
+                    memcpy(value + value_size, line + offset + spaces, strlen(line) - offset - spaces - 1);
+                    value[value_size + strlen(line) - offset - spaces - 1] = '\0';
+                    if ((line + offset + spaces)[strlen(line) - offset - spaces - 2] == '\\')
+                    {
+                        is_multi = 1;
+                        value[value_size + strlen(line) - offset - spaces - 2] = '\0';
+                        break;
+                    }
+                    is_multi = 0;
                     solve_nested_define(value, key, ht);
                     completed_def = 0;
                     break;
