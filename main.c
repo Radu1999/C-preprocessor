@@ -33,9 +33,51 @@ int if_ended_or_switched(char *word)
     return !strcmp(word, "#elif") || !strcmp(word, "#else") || !strcmp(word, "#endif");
 }
 
+char *strsep(char **str, const char *delim)
+{
+    char *st = *str;
+    char *p;
+    p = (st != NULL) ? strpbrk(st, delim) : NULL;
+
+    if (p == NULL)
+    {
+        *str = NULL;
+    }
+    else
+    {
+        *p = '\0';
+        *str = p + 1;
+    }
+    return st;
+}
+
+void solve_nested_define(char *value, char *key, HashTable *ht)
+{
+    char *token;
+    char delim[28] = "\t \n[]{}<>=+-*/%!&|^.,:;()\"\\";
+    char *ptr = strdup(value);
+    char *start_ptr = ptr;
+    int offset = 0;
+    char final[100] = {0};
+    while ((token = strsep(&ptr, delim)) != NULL)
+    {
+        char *initial_token = token;
+        int initial_len = strlen(token);
+        while (has_key(ht, token))
+        {
+            token = get(ht, token);
+        }
+        snprintf(final + strlen(final), strlen(token) + 1, "%s", token);
+        snprintf(final + strlen(final), (int)(ptr - initial_token - initial_len) + 1, "%s", value + offset + initial_len);
+        offset += (int)(ptr - initial_token);
+    }
+    free(start_ptr);
+    put(ht, key, strlen(key), final, strlen(final));
+}
+
 int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
 {
-    char delim[27] = "\t \n[]{}<>=+-*/%!&|^.,:;()\\";
+    char delim[28] = "\t \n[]{}<>=+-*/%!&|^.,:;()\"\\";
     int completed_def = 0;
     int completed_udef = 0;
     char key[100];
@@ -45,21 +87,32 @@ int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
     char condition[100];
     int offset;
     int is_true = 0;
+    int is_comm = 0;
 
     while (fgets(line, LINE_SIZE, in))
     {
         offset = 0;
         char *ptr = strdup(line);
         char *start_ptr = ptr;
-        char *prev = ptr;
         int len = strlen(line);
-        char *token;
-
+        char *token = NULL;
+        char *prev_token = token;
         while ((token = strsep(&ptr, delim)) != NULL)
         {
+            char *initial_token = token;
             if (in_if == 2 && !is_true && !if_ended_or_switched(token))
             {
                 break;
+            }
+            if (prev_token != NULL)
+            {
+                for (char *p = line + (prev_token - start_ptr); p < line + (prev_token - start_ptr) + (token - prev_token); p++)
+                {
+                    if (*p == '"')
+                    {
+                        is_comm = !is_comm;
+                    }
+                }
             }
             if (!strcmp(token, "#else"))
             {
@@ -112,6 +165,19 @@ int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
             else if ((in_if == 2 && is_true) || in_if == 0)
 
             {
+                if (!strcmp(token, "#include") && ptr[strspn(ptr, " ")] == '"')
+                {
+                    token = strsep(&ptr, delim);
+                    char delim[27] = "\t \n[]";
+                    token = strsep(&ptr, delim);
+                    char helper[100];
+                    memcpy(helper, token, strlen(token) - 1);
+                    helper[strlen(token) - 1] = '\0';
+                    FILE *incl = fopen(helper, "r");
+                    solve_defines(incl, out, ht, line);
+                    fclose(incl);
+                    break;
+                }
                 if (!strcmp(token, "#define"))
                 {
                     completed_def = 1;
@@ -126,7 +192,7 @@ int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
                 {
                     memcpy(value, line + offset, strlen(line) - offset - 1);
                     value[strlen(line) - offset - 1] = '\0';
-                    put(ht, key, strlen(key), value, strlen(value));
+                    solve_nested_define(value, key, ht);
                     completed_def = 0;
                     break;
                 }
@@ -143,17 +209,16 @@ int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
                 else
                 {
                     int initial_len = strlen(token);
-                    while (has_key(ht, token))
+                    while (!is_comm && has_key(ht, token))
                     {
                         token = get(ht, token);
                     }
                     fprintf(out, "%s", token);
-                    fprintf(out, "%.*s", (int)(ptr - prev - initial_len), line + offset + initial_len);
+                    fprintf(out, "%.*s", (int)(ptr - initial_token - initial_len), line + offset + initial_len);
                 }
             }
-
-            offset += (int)(ptr - prev);
-            prev = ptr;
+            prev_token = initial_token;
+            offset += (int)(ptr - initial_token);
         }
         free(start_ptr);
     }
