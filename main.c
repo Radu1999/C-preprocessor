@@ -4,7 +4,9 @@
 #include <stddef.h>
 
 #include "HashTable.h"
-#define LINE_SIZE 300
+#define LINE_SIZE 500
+#define WORD_SIZE 500
+#define NUM_DIRS 100
 
 unsigned int
 hash(void *str)
@@ -58,7 +60,7 @@ void solve_nested_define(char *value, char *key, HashTable *ht)
     char *ptr = strdup(value);
     char *start_ptr = ptr;
     int offset = 0;
-    char final[100] = {0};
+    char final[WORD_SIZE] = {0};
     while ((token = strsep(&ptr, delim)) != NULL)
     {
         char *initial_token = token;
@@ -75,16 +77,16 @@ void solve_nested_define(char *value, char *key, HashTable *ht)
     put(ht, key, strlen(key), final, strlen(final));
 }
 
-int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
+void solve_defines(FILE *in, FILE *out, HashTable *ht, char *line, char **directories, int dirNum)
 {
     char delim[28] = "\t \n[]{}<>=+-*/%!&|^.,:;()\"\\";
     int completed_def = 0;
     int completed_udef = 0;
-    char key[100];
-    char value[100];
+    char key[WORD_SIZE];
+    char value[WORD_SIZE];
 
     int in_if = 0;
-    char condition[100];
+    char condition[WORD_SIZE];
     int offset;
     int is_true = 0;
     int is_comm = 0;
@@ -165,6 +167,7 @@ int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
             else if (!strcmp(token, "#endif"))
             {
                 in_if = 0;
+                break;
             }
             else if ((in_if == 2 && is_true) || in_if == 0)
 
@@ -172,14 +175,32 @@ int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
                 if (!strcmp(token, "#include") && ptr[strspn(ptr, " ")] == '"')
                 {
                     token = strsep(&ptr, delim);
-                    char delim[27] = "\t \n[]";
+                    char delim[6] = "\t \n[]";
                     token = strsep(&ptr, delim);
-                    char helper[100];
+                    char helper[WORD_SIZE];
                     memcpy(helper, token, strlen(token) - 1);
                     helper[strlen(token) - 1] = '\0';
-                    FILE *incl = fopen(helper, "r");
-                    solve_defines(incl, out, ht, line);
-                    fclose(incl);
+                    int has_file = 0;
+                    for (int i = 0; i < dirNum; i++)
+                    {
+                        char *path = malloc(strlen(directories[i]) + strlen(helper) + 1);
+                        DIE(path == NULL, "path allocation");
+
+                        memcpy(path, directories[i], strlen(directories[i]));
+                        memcpy(path + strlen(directories[i]), helper, strlen(helper));
+                        path[strlen(directories[i]) + strlen(helper)] = '\0';
+                        FILE *incl = fopen(path, "r");
+                        if (incl != NULL)
+                        {
+                            solve_defines(incl, out, ht, line, directories, dirNum);
+                            fclose(incl);
+                            has_file = 1;
+                            free(path);
+                            break;
+                        }
+                        free(path);
+                    }
+                    DIE(has_file == 0, "no such file");
                     break;
                 }
                 if (!strcmp(token, "#define"))
@@ -196,7 +217,7 @@ int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
                 {
                     int spaces = strspn(line + offset, " ");
                     int value_size = strlen(value);
-                    memcpy(value + value_size, line + offset + spaces, strlen(line) - offset - spaces - 1);
+                    memcpy(value + value_size, line + offset + spaces, strlen(line) - offset - spaces);
                     value[value_size + strlen(line) - offset - spaces - 1] = '\0';
                     if ((line + offset + spaces)[strlen(line) - offset - spaces - 2] == '\\')
                     {
@@ -235,7 +256,6 @@ int solve_defines(FILE *in, FILE *out, HashTable *ht, char *line)
         }
         free(start_ptr);
     }
-    return 0;
 }
 
 int main(int argc, char **argv)
@@ -246,11 +266,20 @@ int main(int argc, char **argv)
     char line[LINE_SIZE];
 
     HashTable *ht = malloc(sizeof(HashTable));
+    DIE(ht == NULL, "Hashtable allocation");
     init_ht(ht, ht_size, hash, compare_function_strings);
 
     int symbol = 0;
     int out_file = 0;
+    int direct = 0;
     char *token;
+
+    char **directories = malloc(NUM_DIRS * sizeof(char *));
+    DIE(directories == NULL, "directories alloc");
+    int dirNum = 1;
+    directories[0] = malloc(3);
+    DIE(directories[0] == NULL, "Directory alloc");
+    memcpy(directories[0], "./\0", 3);
 
     for (int i = 1; i < argc; i++)
     {
@@ -302,13 +331,28 @@ int main(int argc, char **argv)
         {
             outfile = argv[i] + 2;
         }
+        else if (strlen(argv[i]) == 2 && !strncmp(argv[i], "-I", 2))
+        {
+            direct = 1;
+        }
+        else if (direct == 1)
+        {
+            directories[dirNum] = malloc(strlen(argv[i]));
+            DIE(directories[dirNum] == NULL, "Directory alloc");
+            memcpy(directories[dirNum++], argv[i], strlen(argv[i]));
+            direct = 0;
+        }
         else if (infile == NULL)
         {
             infile = argv[i];
         }
-        else
+        else if (outfile == NULL)
         {
             outfile = argv[i];
+        }
+        else
+        {
+            exit(11);
         }
     }
     FILE *in;
@@ -319,6 +363,27 @@ int main(int argc, char **argv)
     else
     {
         in = fopen(infile, "r");
+
+        char delim[2] = "/";
+        char path[WORD_SIZE] = {0};
+        char *token = strtok(infile, delim);
+        char *aux;
+        while (token != NULL)
+        {
+            aux = token;
+            token = strtok(NULL, delim);
+            if (token != NULL)
+            {
+                memcpy(path + strlen(path), aux, strlen(aux));
+                memcpy(path + strlen(path), "/", 1);
+            }
+        }
+        directories[dirNum] = malloc(strlen(path) + 1);
+        DIE(directories[dirNum] == NULL, "directory alloc");
+        memcpy(directories[dirNum], path, strlen(path));
+        directories[dirNum++][strlen(path)] = '\0';
+
+        DIE(in == NULL, "open input file error");
         if (in == NULL)
         {
             free_ht(ht);
@@ -334,6 +399,7 @@ int main(int argc, char **argv)
     else
     {
         out = fopen(outfile, "w");
+        DIE(out == NULL, "open output file error");
         if (out == NULL)
         {
             fclose(in);
@@ -342,16 +408,15 @@ int main(int argc, char **argv)
         }
     }
 
-    if (solve_defines(in, out, ht, line) == 1)
-    {
-        fclose(in);
-        fclose(out);
-        free_ht(ht);
-        return 1;
-    }
+    solve_defines(in, out, ht, line, directories, dirNum);
 
     fclose(in);
     fclose(out);
     free_ht(ht);
+    for (int i = 0; i < dirNum; i++)
+    {
+        free(directories[i]);
+    }
+    free(directories);
     return 0;
 }

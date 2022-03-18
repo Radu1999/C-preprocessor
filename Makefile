@@ -1,8 +1,8 @@
-build: LinkedList.o HashTable.o main.o
-	gcc $^ -o so-cpp
+build: LinkedList.o HashTable.o main.o utils.h
+	gcc -g $^ -o so-cpp
 
 main.o: main.c
-	gcc -c $^
+	gcc -g -c $^
 
 LinkedList.o: LinkedList.h LinkedList.c
 	gcc -c $^
