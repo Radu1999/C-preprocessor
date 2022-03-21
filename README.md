@@ -9,7 +9,7 @@ Grupă: 335
 
 **_Obligatoriu:_**
 
-- Solutia se foloseste de o implementare portabila a strsep pentru a delimita cuvintele, si de calcul cu pointeri pentru a nu neglija caracterele dintre cuvinte
+- Solutia se foloseste de o implementare portabila a strsep pentru a delimita cuvintele, si de calcul cu pointeri pentru a nu neglija caracterele dintre cuvinte.
 - Aspectul util al temei a fost partea de dezvoltare pe ambele sisteme de operare pentru ca am fost nevoit sa ma documentez mai in detaliu despre functiile pe care deja le foloseam de la sine.
 
 ## Implementare
@@ -22,9 +22,8 @@ Grupă: 335
 
 ## Bibliografie
 
-- Am utilizat implementarea de HashTable de la Structuri de Date.
+- Am utilizat implementarea de HashTable si LinkedList de la Structuri de Date.
 - Pentru scrierea functiei portabile de strsep am avut inspiratie aici: https://stackoverflow.com/questions/8512958/is-there-a-windows-variant-of-strsep-function
--
 
 ## Git
 
