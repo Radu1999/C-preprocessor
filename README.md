@@ -3,46 +3,29 @@ Grupă: 335
 
 # Tema 1
 
-# Este recomandat să folosiți diacritice
-
 ## Organizare
 
-1. Explicație pentru structura creată (sau soluția de ansamblu aleasă):
+1. Solutia parcurge cuvinte din fisierul de input (sau stdin in lipsa), le proceseaza si le scrie in fisierul de output (stdout in lipsa).
 
 **_Obligatoriu:_**
 
-- De făcut referință la abordarea generală menționată în paragraful de mai sus. Aici se pot băga bucăți de cod/funcții - etc.
-- Consideri că tema este utilă?
-- Consideri implementarea naivă, eficientă, se putea mai bine?
-
-**_Opțional:_**
-
-- De menționat cazuri speciale (corner cases), nespecificate în enunț și cum au fost tratate.
+- Solutia se foloseste de o implementare portabila a strsep pentru a delimita cuvintele, si de calcul cu pointeri pentru a nu neglija caracterele dintre cuvinte
+- Aspectul util al temei a fost partea de dezvoltare pe ambele sisteme de operare pentru ca am fost nevoit sa ma documentez mai in detaliu despre functiile pe care deja le foloseam de la sine.
 
 ## Implementare
 
-- De specificat dacă întregul enunț al temei e implementat
-- Dacă există funcționalități extra, pe lângă cele din enunț - descriere succintă (maximum 3-4 rânduri/funcționalitate) + motivarea lor (maximum o frază)
-- De specificat funcționalitățile lipsă din enunț (dacă există) și menționat dacă testele reflectă sau nu acest lucru
-- Dificultăți întâmpinate
-- Lucruri interesante descoperite pe parcurs
+- Intregul enunt al temei este implementat.
 
 ## Cum se compilează și cum se rulează?
 
-- Explicație, ce biblioteci linkează, cum se face build
-- Cum se rulează executabilul, se rulează cu argumente (sau nu)
+- Compilarea se face ca in enunt, se construiesc fisiere obiect din fiecare sursa, din care se va obtine executabilul
 
 ## Bibliografie
 
-- Resurse utilizate - toate resursele publice de pe internet/cărți/code snippets, chiar dacă sunt laboratoare de SO
+- Am utilizat implementarea de HashTable de la Structuri de Date.
+- Pentru scrierea functiei portabile de strsep am avut inspiratie aici: https://stackoverflow.com/questions/8512958/is-there-a-windows-variant-of-strsep-function
+-
 
 ## Git
 
-1. Link către repo-ul de git
-
-## Ce să **NU**
-
-- Detalii de implementare despre fiecare funcție/fișier în parte
-- Fraze lungi care să ocolească subiectul în cauză
-- Răspunsuri și idei neargumentate
-- Comentarii și _TODO_-uri
+1. https://github.com/Radu1999/C-preprocessor
