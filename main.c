@@ -24,7 +24,7 @@ int compare_function_strings(void *a, void *b)
 {
 	return strcmp((char *)a, (char *)b);
 }
-char *strsep(char **str, const char *delim)
+char *portable_strsep(char **str, const char *delim)
 {
 	char *st = *str;
 	char *p;
@@ -58,7 +58,7 @@ void solve_nested_define(char *value, char *key, struct HashTable *ht)
 	int offset = 0;
 	char final[WORD_SIZE] = {0};
 
-	while ((token = strsep(&ptr, delim)) != NULL) {
+	while ((token = portable_strsep(&ptr, delim)) != NULL) {
 		char *initial_token = token;
 		int initial_len = strlen(token);
 
@@ -101,7 +101,7 @@ void solve_defines(FILE *in, FILE *out, struct HashTable *ht, char *line,
 
 		if (!is_multi)
 			value[0] = '\0';
-		while ((token = strsep(&ptr, delim)) != NULL) {
+		while ((token = portable_strsep(&ptr, delim)) != NULL) {
 			char *initial_token = token;
 
 			if (in_if == 2 && !is_true &&
@@ -161,8 +161,9 @@ void solve_defines(FILE *in, FILE *out, struct HashTable *ht, char *line,
 					int has_file = 0;
 					int i = 0;
 
-					token = strsep(&ptr, delim);
-					token = strsep(&ptr, delim_file);
+					token = portable_strsep(&ptr, delim);
+					token =
+					    portable_strsep(&ptr, delim_file);
 					memcpy(helper, token,
 					       strlen(token) - 1);
 					helper[strlen(token) - 1] = '\0';
