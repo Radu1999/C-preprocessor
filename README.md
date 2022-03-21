@@ -18,7 +18,7 @@ Grupă: 335
 
 ## Cum se compilează și cum se rulează?
 
-- Compilarea se face ca in enunt, se construiesc fisiere obiect din fiecare sursa, din care se va obtine executabilul
+- Compilarea se face ca in enunt, se construiesc fisiere obiect din fiecare sursa, din care se va obtine executabilul.
 - Pentru compilare: comanda make pe Linux si nmake pe Windows.
 - Se ruleaza cum este specificat in enuntul temei.
 
@@ -26,6 +26,7 @@ Grupă: 335
 
 - Am utilizat implementarea de HashTable si LinkedList de la Structuri de Date.
 - Pentru scrierea functiei portabile de strsep am avut inspiratie aici: https://stackoverflow.com/questions/8512958/is-there-a-windows-variant-of-strsep-function
+- Am utilizat si macro-ul DIE (utils.h) din laboratorul de SO.
 
 ## Git
 
