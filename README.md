@@ -19,6 +19,8 @@ Grupă: 335
 ## Cum se compilează și cum se rulează?
 
 - Compilarea se face ca in enunt, se construiesc fisiere obiect din fiecare sursa, din care se va obtine executabilul
+- Pentru compilare: comanda make pe Linux si nmake pe Windows
+- Se ruleaza cum este specificat in enuntul temei
 
 ## Bibliografie
 
