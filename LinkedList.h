@@ -1,16 +1,15 @@
 #ifndef __LINKEDLIST_H__
 #define __LINKEDLIST_H__
+#include "utils.h"
 
-struct Node
-{
-    void *data;
-    struct Node *next;
+struct Node {
+	void *data;
+	struct Node *next;
 };
 
-struct LinkedList
-{
-    struct Node *head;
-    int size;
+struct LinkedList {
+	struct Node *head;
+	int size;
 };
 
 void init_list(struct LinkedList *list);

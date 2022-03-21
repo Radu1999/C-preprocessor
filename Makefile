@@ -1,14 +1,16 @@
-build: LinkedList.o HashTable.o main.o utils.h
-	gcc -g $^ -o so-cpp
+CFLAGS = /D_CRT_SECURE_NO_DEPRECATE /W3 /EHsc /Za /MD /D_NO_CRT_STDIO_INLINE /NODEFAULTLIB:LIBCMT
 
-main.o: main.c
-	gcc -g -c $^
+build: so-cpp.obj HashTable.obj LinkedList.obj
+	cl.exe $(CFLAGS) /Feso-cpp.exe so-cpp.obj HashTable.obj LinkedList.obj
 
-LinkedList.o: LinkedList.h LinkedList.c
-	gcc -c $^
+so-cpp.obj: main.c     
+	cl.exe $(CFLAGS) /Foso-cpp.obj /c main.c
 
-HashTable.o: HashTable.c HashTable.h
-	gcc -c $^
+HashTable.obj: HashTable.c     
+	cl.exe $(CFLAGS) /FoHashTable.obj /c HashTable.c
+
+LinkedList.obj: LinkedList.c     
+	cl.exe $(CFLAGS) /FoLinkedList.obj /c LinkedList.c
 
 clean:
-	rm *.o so-cpp *.gch
+	del *.obj *.exe

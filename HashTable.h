@@ -1,34 +1,34 @@
 #ifndef __HASHTABLE_H
 #define __HASHTABLE_H
 
-#include <stddef.h>
 #include "LinkedList.h"
+#include <stddef.h>
 
-typedef struct
-{
-    struct LinkedList *buckets;
-    int size;
-    int hmax;
-    unsigned int (*hash_function)(void *);
-    int (*compare_function)(void *, void *);
-} HashTable;
+struct HashTable {
+	struct LinkedList *buckets;
+	int size;
+	int hmax;
+	unsigned int (*hash_function)(void *a);
+	int (*compare_function)(void *a, void *b);
+};
 
-void init_ht(HashTable *ht, int hmax, unsigned int (*hash_function)(void *), int (*compare_function)(void *, void *));
+void init_ht(struct HashTable *ht, int hmax,
+	     unsigned int (*hash_function)(void *),
+	     int (*compare_function)(void *, void *));
 
-void put(HashTable *ht, void *key, size_t key_size_bytes, void *value, size_t value_size_bytes);
+void put(struct HashTable *ht, void *key, size_t key_size_bytes, void *value,
+	 size_t value_size_bytes);
 
-void *get(HashTable *ht, void *key);
+void *get(struct HashTable *ht, void *key);
 
-int has_key(HashTable *ht, void *key);
+int has_key(struct HashTable *ht, void *key);
 
-void remove_ht_entry(HashTable *ht, void *key);
+void remove_ht_entry(struct HashTable *ht, void *key);
 
-int get_ht_size(HashTable *ht);
+int get_ht_size(struct HashTable *ht);
 
-int get_ht_hmax(HashTable *ht);
+int get_ht_hmax(struct HashTable *ht);
 
-void free_ht(HashTable *ht);
-
-HashTable *resizeS(HashTable **ht);
+void free_ht(struct HashTable *ht);
 
 #endif
